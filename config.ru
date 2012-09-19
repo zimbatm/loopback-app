@@ -1,5 +1,6 @@
 require 'json'
 
+# Not using that anymore
 run ->(env) {
   http_stuff = env.select{|k,v| k =~ /^[A-Z]/}
   json = JSON.dump(http_stuff)
