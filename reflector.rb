@@ -47,12 +47,18 @@ def handle_client(client)
 <meta charset="utf-8">
 <title>Loopback</title>
 <link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css">
+<style>
+body{ padding: 2em; }
+</style>
+<h1>Loopback</h1>
+<p>This is the exact request that my server got from the last hop:</p>
 <pre>
 #{CGI.escape_html body}
 </pre>
 <pre>
 #{hexwall body}
-</pre}
+</pre>
+<footer>This service was coded by zimbatm ( <a href="http://0x2a.im">http://0x2a.im</a> ) and is hosted by <a href="http://heroku.com">Heroku</a></footer>
       HTML_BODY
     end
 
