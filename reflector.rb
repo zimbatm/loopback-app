@@ -7,9 +7,20 @@ require 'thread'
 require 'socket'
 require 'timeout'
 require 'securerandom'
+require 'cgi'
 
 def get_unique_client_id
   SecureRandom.random_number(2**64).to_s(32)
+end
+
+CRLF = "\r\n"
+CRLF2 = CRLF * 2
+CRLF_HEX = ["0d", "0a"]
+
+def hexwall(str)
+  str.split(CRLF).map do |line|
+    line.bytes.map{|b| "%02x" % b}.join(" ") + CRLF_HEX.join
+  end.join(CRLF)
 end
 
 def handle_client(client)
@@ -20,13 +31,32 @@ def handle_client(client)
 
   timeout(5) do
     request = [""]
-    while !request.join.index("\r\n\r\n")
-      request << client.sysread(1024)
+    while !request.join.index(CRLF2)
+      line = client.sysread(1024)
+      log[line]
+      request << line
     end
 
     body = request.join
+    content_type = 'text/plain'
 
-    client.write "HTTP/1.0 200 OK\r\nContent-Length: #{body.bytesize}\r\nContent-Type: text/plain\r\n\r\n#{body}"
+    if body =~ /Accept:.*text\/html/
+      content_type = 'text/html'
+      body = <<-HTML_BODY
+<!doctype html>
+<meta charset="utf-8">
+<title>Loopback</title>
+<link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css">
+<pre>
+#{CGI.escape_html body}
+</pre>
+<pre>
+#{hexwall body}
+</pre}
+      HTML_BODY
+    end
+
+    client.write ['HTTP/1.0 200 OK', "Content-Length: #{body.bytesize}", "Content-Type: #{content_type}", "", body].join(CRLF)
   end
 rescue Timeout::Error
   log[:client_timeout]
